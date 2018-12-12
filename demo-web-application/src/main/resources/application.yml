@@ -11,9 +11,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
-  h2:
-    console:
-      enabled: true
   mvc:
     favicon:
       enabled: false

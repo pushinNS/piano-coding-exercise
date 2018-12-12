@@ -35,23 +35,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         this.unauthorizedHandler = unauthorizedHandler;
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.cors().and().csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-                .authorizeRequests()
-                .antMatchers("/register", "/login").permitAll()
-                .antMatchers(HttpMethod.GET, "/css/**", "/js/**").permitAll()
-                .antMatchers("/auth").authenticated()
-                .and()
-                .apply(new JwtConfigurer(jwtTokenProvider));
-    }
-
     @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.cors().and().csrf().disable()
+                .headers().frameOptions().disable().and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+                .authorizeRequests()
+                    .antMatchers("/register", "/login").permitAll()
+                    .antMatchers(HttpMethod.GET, "/css/**").permitAll()
+                    .antMatchers("/auth").authenticated()
+                    .and()
+                .apply(new JwtConfigurer(jwtTokenProvider));
     }
 
     @Override

@@ -20,10 +20,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.ModelAndView;
 
 
 @Controller
@@ -44,43 +42,45 @@ public class AuthorizationController {
         this.authenticationManager = authenticationManager;
     }
 
-    @PostMapping(value = "/login")
-    public String login(@Valid @RequestBody UserDto userDto) {
-
-        String jwt = getJwt(userDto.getUsername(), userDto.getPassword());
-
-        return "forward:/auth";
-    }
-
-    @GetMapping("/auth")
-    @PostMapping("/auth")
-    public void getUserDetails(@RequestParam String redirectUrl, HttpServletRequest request,
-            HttpServletResponse response) throws ServletException, IOException {
-        setJwtResponseHeader(jwtTokenProvider.resolveToken(request), response);
-        request.getRequestDispatcher(redirectUrl).forward(request, response);
-    }
-
     @PostMapping(value = "/register")
-    public String register(@Valid @RequestBody UserDto dto,
-            HttpServletResponse response) {
-        final String password = dto.getPassword();
-        final String username = dto.getUsername();
+    public String register(@Valid @ModelAttribute UserDto userDto,
+            BindingResult bindingResult, HttpServletResponse response) {
+        final String password = userDto.getPassword();
+        final String username = userDto.getUsername();
 
         userService.register(new User(username, password));
 
-        final String jwt = getJwt(username, password);
-        setJwtResponseHeader(jwt, response);
         return "redirect:/login";
     }
 
+    @PostMapping(value = "/login")
+    public String login(@Valid @ModelAttribute UserDto userDto, HttpServletResponse response,
+            BindingResult bindingResult, Model model) {
+
+        if (bindingResult.hasErrors()) {
+
+        }
+        String jwt = getJwt(userDto.getUsername(), userDto.getPassword());
+        model.addAttribute("jwt", jwt);
+        setJwtResponseHeader(jwt, response);
+        return returnMainPage(model);
+    }
+
+    @GetMapping("/auth")
+    public void getUserDetails(@RequestParam String redirectUrl, HttpServletRequest request,
+            HttpServletResponse response) throws ServletException, IOException {
+        setJwtResponseHeader(jwtTokenProvider.resolveToken(request), response);
+        response.sendRedirect(redirectUrl);
+    }
+
     @GetMapping("/login")
-    public String openLoginPage() {
-        return AUTH_PAGE;
+    public String openLoginPage(Model model) {
+        return returnMainPage(model);
     }
 
     @GetMapping("/register")
-    public String openRegistrationPage() {
-        return AUTH_PAGE;
+    public String openRegistrationPage(Model model) {
+        return returnMainPage(model);
     }
 
     @GetMapping("/logout")
@@ -92,8 +92,9 @@ public class AuthorizationController {
         return "redirect:/login";
     }
 
-    @GetMapping("error")
-    public String handleErrors() {
+    private String returnMainPage(Model model) {
+        UserDto personForm = new UserDto();
+        model.addAttribute("user", personForm);
         return AUTH_PAGE;
     }
 

@@ -5,33 +5,37 @@
   <link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
 </head>
 <body>
-<div th:if="${param.error}">
-  <div class="alert alert-danger">
+<div th:if="${error}">
+  <div class="errors" th:text="${error}">
     Invalid username or password.
   </div>
 </div>
+
+<div th:if="${jwt}">
+  <span class="jwt" id="${jwt}" th:text="${'Your token: ' + jwt}"></span>
+  <input type="submit" value="Redirect">
+</div>
 <div id="forms">
   <div id="register">
-    <form id="registerForm">
+    <h3>Registration</h3><br>
+    <form id="registerForm" th:action="@{/register}" th:object="${user}" method="POST">
       <label>Username</label>
-      <input type="text" name="username">
+      <input type="text" th:field="*{username}">
       <label>Password</label>
-      <input type="password" name="password">
+      <input type="password" th:field="*{password}">
       <input type="submit" value="Submit">
     </form>
   </div>
   <div id="login">
-    <form id="loginForm">
+    <h3>Login</h3><br>
+    <form id="loginForm" th:action="@{/login}" th:object="${user}" method="post">
       <label>Username</label>
-      <input type="text" name="username">
+      <input type="text" th:field="*{username}">
       <label>Password</label>
-      <input type="password" name="password">
+      <input type="password" th:field="*{password}">
       <input type="submit" value="Submit">
     </form>
   </div>
 </div>
-<script type="text/javascript"
-        src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script type="text/javascript" th:src="@{/js/auth-form-script.js}"></script>
 </body>
 </html>

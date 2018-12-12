@@ -27,7 +27,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(encoded);
             return;
         }
-        throw new UserAlreadyExistsException();
+        throw new UserAlreadyExistsException("User already exists");
     }
 
     private User withEncodedPassword(User user) {
