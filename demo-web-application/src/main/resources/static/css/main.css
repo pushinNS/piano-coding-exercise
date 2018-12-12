@@ -1,0 +1,25 @@
+#forms {
+  margin: 200px auto;
+  display: flex;
+  justify-content: center;
+  width: 80%;
+}
+
+#forms div {
+  display: inline-block;
+  padding: 30px;
+}
+
+#loginForm input, #registerForm input {
+  display: block;
+  padding: 5px;
+  margin: 5px;
+}
+
+#login {
+  border-left: 1px solid black;
+}
+
+.errors {
+  color: red;
+}

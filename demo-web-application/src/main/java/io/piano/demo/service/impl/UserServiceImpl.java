@@ -1,5 +1,6 @@
 package io.piano.demo.service.impl;
 
+import io.piano.demo.exception.UserAlreadyExistsException;
 import io.piano.demo.model.User;
 import io.piano.demo.repository.UserRepository;
 import io.piano.demo.service.UserService;
@@ -20,8 +21,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void register(User user) {
-        User encoded = withEncodedPassword(user);
-        userRepository.save(encoded);
+        final User byUsername = userRepository.findByUsername(user.getUsername());
+        if (byUsername == null) {
+            User encoded = withEncodedPassword(user);
+            userRepository.save(encoded);
+            return;
+        }
+        throw new UserAlreadyExistsException();
     }
 
     private User withEncodedPassword(User user) {
