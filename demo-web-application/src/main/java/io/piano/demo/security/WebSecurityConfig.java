@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -44,15 +45,19 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
-                .headers().frameOptions().disable().and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-                .authorizeRequests()
+                    .headers().frameOptions().disable()
+                .and()
+                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                    .exceptionHandling().authenticationEntryPoint(unauthorizedHandler)
+                .and()
+                    .authorizeRequests()
                     .antMatchers("/register", "/login").permitAll()
                     .antMatchers(HttpMethod.GET, "/css/**").permitAll()
                     .antMatchers("/auth").authenticated()
-                    .and()
-                .apply(new JwtConfigurer(jwtTokenProvider));
+                .and()
+                    .addFilterBefore(new JwtTokenAuthenticationFilter(jwtTokenProvider),
+                        UsernamePasswordAuthenticationFilter.class);
     }
 
     @Override

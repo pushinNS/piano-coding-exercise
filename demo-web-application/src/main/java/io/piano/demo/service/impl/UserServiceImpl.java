@@ -13,8 +13,7 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder encoder;
     private final UserRepository userRepository;
 
-    public UserServiceImpl(BCryptPasswordEncoder encoder,
-            UserRepository userRepository) {
+    public UserServiceImpl(BCryptPasswordEncoder encoder, UserRepository userRepository) {
         this.encoder = encoder;
         this.userRepository = userRepository;
     }
@@ -23,16 +22,16 @@ public class UserServiceImpl implements UserService {
     public void register(User user) {
         final User byUsername = userRepository.findByUsername(user.getUsername());
         if (byUsername == null) {
-            User encoded = withEncodedPassword(user);
+            User encoded = encodeUserPassword(user);
             userRepository.save(encoded);
             return;
         }
         throw new UserAlreadyExistsException("User already exists");
     }
 
-    private User withEncodedPassword(User user) {
-        String rawPass = user.getPassword();
-        user.setPassword(encoder.encode(rawPass));
-        return user;
+    private User encodeUserPassword(User user) {
+        final String rawPass = user.getPassword();
+        final String username = user.getUsername();
+        return new User(username, encoder.encode(rawPass));
     }
 }

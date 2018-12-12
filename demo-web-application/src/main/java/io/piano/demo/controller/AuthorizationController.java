@@ -5,10 +5,10 @@ import io.piano.demo.model.User;
 import io.piano.demo.security.JwtTokenProvider;
 import io.piano.demo.service.UserService;
 import java.io.IOException;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,56 +31,66 @@ public class AuthorizationController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
-
-    private final static String AUTH_PAGE = "auth";
+    private final ModelMapper modelMapper;
 
     public AuthorizationController(UserService userDetailsService,
             JwtTokenProvider jwtTokenProvider,
-            AuthenticationManager authenticationManager) {
+            AuthenticationManager authenticationManager, ModelMapper modelMapper) {
         this.userService = userDetailsService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.authenticationManager = authenticationManager;
+        this.modelMapper = modelMapper;
     }
 
     @PostMapping(value = "/register")
-    public String register(@Valid @ModelAttribute UserDto userDto,
-            BindingResult bindingResult, HttpServletResponse response) {
-        final String password = userDto.getPassword();
-        final String username = userDto.getUsername();
+    public String register(@Valid @ModelAttribute("registeringUser") UserDto registeringUser,
+            BindingResult bindingResult,
+            Model model, HttpServletResponse response) {
+        if (bindingResult.hasErrors()) {
+            return configuredAuthPage(model, registeringUser);
+        }
+        User user = mapDtoToModel(registeringUser);
+        userService.register(user);
 
-        userService.register(new User(username, password));
+        String jwt = authenticate(user);
 
-        return "redirect:/login";
+        setJwtResponseHeader(jwt, response);
+        model.addAttribute("jwt", jwt);
+
+        return configuredAuthPage(model);
     }
 
     @PostMapping(value = "/login")
-    public String login(@Valid @ModelAttribute UserDto userDto, HttpServletResponse response,
-            BindingResult bindingResult, Model model) {
-
+    public String login(@Valid @ModelAttribute("loggingInUser") UserDto loggingInUser,
+            BindingResult bindingResult,
+            Model model, HttpServletResponse response) {
         if (bindingResult.hasErrors()) {
-
+            return configuredAuthPage(model, loggingInUser);
         }
-        String jwt = getJwt(userDto.getUsername(), userDto.getPassword());
-        model.addAttribute("jwt", jwt);
+
+        String jwt = authenticate(mapDtoToModel(loggingInUser));
+
         setJwtResponseHeader(jwt, response);
-        return returnMainPage(model);
+        model.addAttribute("jwt", jwt);
+
+        return configuredAuthPage(model);
     }
 
     @GetMapping("/auth")
     public void getUserDetails(@RequestParam String redirectUrl, HttpServletRequest request,
-            HttpServletResponse response) throws ServletException, IOException {
+            HttpServletResponse response) throws IOException {
         setJwtResponseHeader(jwtTokenProvider.resolveToken(request), response);
         response.sendRedirect(redirectUrl);
     }
 
     @GetMapping("/login")
     public String openLoginPage(Model model) {
-        return returnMainPage(model);
+        return configuredAuthPage(model);
     }
 
     @GetMapping("/register")
     public String openRegistrationPage(Model model) {
-        return returnMainPage(model);
+        return configuredAuthPage(model);
     }
 
     @GetMapping("/logout")
@@ -92,25 +102,37 @@ public class AuthorizationController {
         return "redirect:/login";
     }
 
-    private String returnMainPage(Model model) {
-        UserDto personForm = new UserDto();
-        model.addAttribute("user", personForm);
-        return AUTH_PAGE;
-    }
+    private String authenticate(User user) {
+        final UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
 
-    private String getJwt(@RequestParam String username,
-            @RequestParam String password) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-        );
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         return jwtTokenProvider.createToken(authentication);
     }
 
+    private String configuredAuthPage(Model model) {
+        UserDto user = new UserDto();
+        return configuredAuthPage(model, user);
+    }
+
+    private String configuredAuthPage(Model model, UserDto user) {
+        //Using different names for entities to distinguish forms
+        model.addAttribute("registeringUser", user);
+        model.addAttribute("loggingInUser", user);
+        return "auth";
+    }
+
     private void setJwtResponseHeader(String jwt, HttpServletResponse response) {
         String tokenHeader = "Bearer " + jwt;
         response.setHeader("Authorization", tokenHeader);
     }
+
+    private User mapDtoToModel(
+            @ModelAttribute @Valid UserDto userDto) {
+        return modelMapper.map(userDto, User.class);
+    }
+
 }

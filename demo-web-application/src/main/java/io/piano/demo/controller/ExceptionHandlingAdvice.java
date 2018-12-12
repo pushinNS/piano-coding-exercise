@@ -34,7 +34,8 @@ public class ExceptionHandlingAdvice {
         final String message = e.getMessage();
         log.warn(message);
         model.addAttribute("error", message);
-        model.addAttribute("user", new UserDto());
+        model.addAttribute("loggingInUser", new UserDto());
+        model.addAttribute("registeringUser", new UserDto());
         return AUTH_PAGE;
     }
 }

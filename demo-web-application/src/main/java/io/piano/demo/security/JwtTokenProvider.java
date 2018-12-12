@@ -1,5 +1,7 @@
 package io.piano.demo.security;
 
+import static ch.qos.logback.core.CoreConstants.EMPTY_STRING;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -15,27 +17,23 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
 @Slf4j
+@Component
 public class JwtTokenProvider {
 
+    private static final String TOKEN_HEADER_NAME = "Authorization";
+    private static final String TOKEN_HEADER_PREFIX = "Bearer ";
     @Value("${security.jwt.token.secret-key:secret}")
-    private String secretKey = "secret";
-    @Value("${security.jwt.token.expire-length:3600000}")
-    private long validityInMilliseconds = 3600000; // 1h
+    private String secretKey;
+    @Value("${security.jwt.token.expire-length:3600000}")   // 1h
+    private long validityInMilliseconds;
 
     private final UserDetailsService userDetailsService;
 
-    public JwtTokenProvider(
-            UserDetailsService userDetailsService) {
+    public JwtTokenProvider(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
-    }
-
-    @PostConstruct
-    protected void init() {
-        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
     }
 
     public String createToken(Authentication authentication) {
@@ -53,33 +51,35 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public Authentication getAuthentication(String token) {
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(getUsername(token));
-        return new UsernamePasswordAuthenticationToken(userDetails, "",
+    Authentication getAuthentication(String token) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(extractUsername(token));
+        return new UsernamePasswordAuthenticationToken(userDetails, EMPTY_STRING,
                 userDetails.getAuthorities());
     }
 
-    public String getUsername(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
+    private String extractUsername(String token) {
+        return Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     public String resolveToken(HttpServletRequest req) {
-        String bearerToken = req.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        String bearerToken = req.getHeader(TOKEN_HEADER_NAME);
+        if (bearerToken != null && bearerToken.startsWith(TOKEN_HEADER_PREFIX)) {
+            return bearerToken.substring(TOKEN_HEADER_PREFIX.length());
         }
         return null;
     }
 
-    public boolean validateToken(String token) {
+    boolean notExpired(String token) {
         try {
+            final Date now = new Date();
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            if (claims.getBody().getExpiration().before(new Date())) {
-                return false;
-            }
-            return true;
+            return !claims.getBody().getExpiration().before(now);
         } catch (JwtException | IllegalArgumentException e) {
-            log.warn("Expired or invalid JWT token");
+            log.error("Expired or invalid JWT token");
         }
         return false;
     }

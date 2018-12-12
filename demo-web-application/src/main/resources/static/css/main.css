@@ -26,3 +26,8 @@
   margin-top: 120px;
   text-align: center;
 }
+
+.validation-errors {
+  font-size: 0.9em;
+  color: red;
+}
