@@ -14,3 +14,10 @@ spring:
   mvc:
     favicon:
       enabled: false
+security:
+  jwt:
+    token:
+      header-name: Authorization
+      header-prefix: Bearer
+      secret-key: SECRET_KEY
+      expire-time: 3600000

@@ -15,16 +15,19 @@ import org.springframework.web.filter.GenericFilterBean;
 public class JwtTokenAuthenticationFilter extends GenericFilterBean {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final InMemoryTokenStore tokenStore;
 
-    public JwtTokenAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtTokenAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+            InMemoryTokenStore tokenStore) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.tokenStore = tokenStore;
     }
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain filterChain)
             throws IOException, ServletException {
         String token = jwtTokenProvider.resolveToken((HttpServletRequest) req);
-        if (token != null && jwtTokenProvider.notExpired(token)) {
+        if (token != null && jwtTokenProvider.notExpired(token) && tokenStore.isStored(token)) {
             Authentication auth = jwtTokenProvider.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(auth);
         }

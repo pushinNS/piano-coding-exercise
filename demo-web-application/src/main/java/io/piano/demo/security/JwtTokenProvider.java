@@ -7,9 +7,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import java.util.Base64;
 import java.util.Date;
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,11 +21,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtTokenProvider {
 
-    private static final String TOKEN_HEADER_NAME = "Authorization";
-    private static final String TOKEN_HEADER_PREFIX = "Bearer ";
+    @Value("${security.jwt.token.header-name:Authorization}")
+    private String tokenHeaderName;
+    @Value("${security.jwt.token.header-prefix:Bearer }")
+    private String tokenHeaderPrefix;
     @Value("${security.jwt.token.secret-key:secret}")
     private String secretKey;
-    @Value("${security.jwt.token.expire-length:3600000}")   // 1h
+    @Value("${security.jwt.token.expire-time:3600000}")
     private long validityInMilliseconds;
 
     private final UserDetailsService userDetailsService;
@@ -66,9 +66,9 @@ public class JwtTokenProvider {
     }
 
     public String resolveToken(HttpServletRequest req) {
-        String bearerToken = req.getHeader(TOKEN_HEADER_NAME);
-        if (bearerToken != null && bearerToken.startsWith(TOKEN_HEADER_PREFIX)) {
-            return bearerToken.substring(TOKEN_HEADER_PREFIX.length());
+        String bearerToken = req.getHeader(tokenHeaderName);
+        if (bearerToken != null && bearerToken.startsWith(tokenHeaderPrefix)) {
+            return bearerToken.substring(tokenHeaderPrefix.length() + 1);
         }
         return null;
     }
