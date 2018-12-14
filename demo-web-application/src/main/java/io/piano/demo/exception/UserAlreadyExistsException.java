@@ -1,6 +1,8 @@
 package io.piano.demo.exception;
 
-public class UserAlreadyExistsException extends RuntimeException {
+import org.springframework.security.core.AuthenticationException;
+
+public class UserAlreadyExistsException extends AuthenticationException {
 
     public UserAlreadyExistsException(String message) {
         super(message);

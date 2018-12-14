@@ -1,6 +1,6 @@
 package io.piano.demo.interceptor;
 
-import io.piano.demo.utils.AuthUtils;
+import io.piano.demo.dto.UserDto;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,9 +16,15 @@ public class ModelAttributesManagingInterceptor extends HandlerInterceptorAdapte
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
             ModelAndView mav) throws Exception {
         if (isAnonymous()) {
-            AuthUtils.addFormObjectsToModel(mav);
+            addValidationLinkedObjectsToModel(mav);
         }
         super.postHandle(request, response, handler, mav);
+    }
+
+    private void addValidationLinkedObjectsToModel(ModelAndView mav) {
+        final UserDto userDto = new UserDto();
+        mav.addObject("loggingInUser", userDto);
+        mav.addObject("registeringUser", userDto);
     }
 
     private boolean isAnonymous() {

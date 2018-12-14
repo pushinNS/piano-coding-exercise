@@ -25,6 +25,7 @@
   color: red;
   margin-top: 120px;
   text-align: center;
+  display: block;
 }
 
 .validation-errors {

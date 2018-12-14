@@ -5,42 +5,49 @@
   <link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
 </head>
 <body>
-
 <div th:switch="${#authentication}? ${#authorization.expression('isAuthenticated()')} : ${false}">
 
   <div th:case="${true}">
-    <span th:text="${'Logged in as ' + #authorization.getAuthentication().getName()}">User</span>
-    <form onsubmit="logout()"><br>
-      <meta id="jwt" th:content="${jwt}"/>
+    <h2 th:text="${'User '+ #authorization.getAuthentication().getName()+' authenticated'}">Msg</h2>
+    <h3 th:text="${'Redirecting to '+ session.redirectUrl +' in 5 seconds'}">Msg</h3>
+    <meta id="redirectUrlHolder" th:content="${session.redirectUrl}">
+
+    <form th:with="jwtHeader =${@environment.getProperty('security.jwt.token.header-name')}"
+          onsubmit="logout()"><br>
       <input type="submit" value="Logout">
     </form>
+
+    <meta id="headerName"
+          th:content="${@environment.getProperty('security.jwt.token.header-name')}"/>
+    <meta id="headerPrefix"
+          th:content="${@environment.getProperty('security.jwt.token.header-prefix')}"/>
+    <meta id="jwt" th:content="${#httpServletResponse.getHeader('Authorization')}"/>
+
+    <script th:src="@{/js/auth-script.js}"></script>
+
   </div>
 
   <div th:case="${false}">
-    <div th:if="${error}">
-      <div class="errors" th:text="${error}">Error</div>
-    </div>
-    <div th:if="${session}">
-      <div class="errors" th:if="${session.error}"
-           th:text="${session.error}">Error
-      </div>
-    </div>
+    <span class="errors" th:text="${error} ? ${error}">Error</span>
     <div id="forms">
+
       <div id="register">
         <h3>Registration</h3><br>
         <form id="registerForm" th:action="@{/register}" th:object="${registeringUser}"
               method="POST">
           <table>
             <tr>
-              <td><label>Username</label></td>
-              <td><input th:id="regUsername" type="text" th:field="*{username}"></td>
+              <td><label for="regUsername">Username</label></td>
+              <td><input id="regUsername" th:id="regUsername" type="text" th:field="*{username}">
+              </td>
               <td class="validation-errors" th:if="${#fields.hasErrors('username')}"
                   th:errors="*{username}">Error
               </td>
             </tr>
             <tr>
-              <td><label>Password</label></td>
-              <td><input th:id="regPassword" type="password" th:field="*{password}"></td>
+              <td><label for="regPassword">Password</label></td>
+              <td><input id="regPassword" th:id="regPassword" type="password"
+                         th:field="*{password}"></td>
               <td class="validation-errors" th:if="${#fields.hasErrors('password')}"
                   th:errors="*{password}">Error
               </td>
@@ -53,20 +60,23 @@
           </table>
         </form>
       </div>
+
       <div id="login">
         <h3>Login</h3><br>
         <form id="loginForm" th:action="@{/login}" th:object="${loggingInUser}" method="post">
           <table>
             <tr>
-              <td><label>Username</label></td>
-              <td><input th:id="loginUsername" type="text" th:field="*{username}"></td>
+              <td><label for="loginUsername">Username</label></td>
+              <td><input id="loginUsername" th:id="loginUsername" type="text"
+                         th:field="*{username}"></td>
               <td class="validation-errors" th:if="${#fields.hasErrors('username')}"
                   th:errors="*{username}">Error
               </td>
             </tr>
             <tr>
-              <td><label>Password</label></td>
-              <td><input th:id="loginPassword" type="password" th:field="*{password}"></td>
+              <td><label for="loginPassword">Password</label></td>
+              <td><input id="loginPassword" th:id="loginPassword" type="password"
+                         th:field="*{password}"></td>
               <td class="validation-errors" th:if="${#fields.hasErrors('password')}"
                   th:errors="*{password}">Error
               </td>
@@ -79,17 +89,9 @@
           </table>
         </form>
       </div>
+
     </div>
   </div>
 </div>
 </body>
-<script>
-  function logout() {
-    var XHR = new XMLHttpRequest();
-    XHR.open('GET', '/logout');
-    console.log(document.getElementById("jwt").content);
-    XHR.setRequestHeader('Authorization', "Bearer " + document.getElementById("jwt").content);
-    XHR.send()
-  }
-</script>
 </html>

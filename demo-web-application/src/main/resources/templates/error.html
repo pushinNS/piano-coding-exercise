@@ -1,0 +1,16 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Oops</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+<div>
+  <h3>Something bad has happened</h3>
+  <h2 th:text="${statusCode}">Status Code</h2>
+  <h4 th:text="${message}">Message</h4>
+  <form th:action="@{/login}">
+    <button type="submit">Back to the Login page</button>
+  </form>
+</div>
+</body>
+</html>
