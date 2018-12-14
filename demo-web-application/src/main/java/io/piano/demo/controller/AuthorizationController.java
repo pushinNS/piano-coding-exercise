@@ -58,19 +58,18 @@ public class AuthorizationController {
         }
         User user = mapDtoToModel(registeringUser);
         userService.register(user);
-
-        authenticateUser(user, response);
+        authenticateUser(user, response, request);
 
         return MAIN_PAGE;
     }
 
     @PostMapping(value = "/login")
     public String login(@Valid @ModelAttribute("loggingInUser") UserDto loggingInUser,
-            BindingResult bindingResult, HttpServletResponse response) {
+            BindingResult bindingResult, HttpServletResponse response, HttpServletRequest request) {
         if (bindingResult.hasErrors()) {
             return MAIN_PAGE;
         }
-        authenticateUser(mapDtoToModel(loggingInUser), response);
+        authenticateUser(mapDtoToModel(loggingInUser), response, request);
 
         return MAIN_PAGE;
     }
@@ -92,7 +91,8 @@ public class AuthorizationController {
         return MAIN_PAGE;
     }
 
-    private void authenticateUser(User user, HttpServletResponse response) {
+    private void authenticateUser(User user, HttpServletResponse response,
+            HttpServletRequest request) {
         final UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
 
@@ -105,6 +105,8 @@ public class AuthorizationController {
         tokenStore.storeToken(jwtToken);
 
         setJwtResponseHeader(jwtToken, response);
+
+        request.setAttribute("jwt", jwtToken);
     }
 
     private void setJwtResponseHeader(String jwt, HttpServletResponse response) {

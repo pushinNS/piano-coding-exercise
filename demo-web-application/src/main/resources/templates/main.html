@@ -9,8 +9,16 @@
 
   <div th:case="${true}">
     <h2 th:text="${'User '+ #authorization.getAuthentication().getName()+' authenticated'}">Msg</h2>
-    <h3 th:text="${'Redirecting to '+ session.redirectUrl +' in 5 seconds'}">Msg</h3>
-    <meta id="redirectUrlHolder" th:content="${session.redirectUrl}">
+
+    <div th:if="${session.redirectUrl}">
+      <h3 th:text="${'Redirecting to '+ session.redirectUrl + jwt + ' in 5 seconds'}">Msg</h3>
+      <meta id="redirectUrlHolder" th:content="${session.redirectUrl}">
+      <script th:src="@{/js/auth-script.js}"></script>
+    </div>
+    <div th:unless="${session.redirectUrl}">
+      <h3 th:text="${'You haven`t specified any redirect URLs. Enjoy your stay!'}">
+        Msg</h3>
+    </div>
 
     <form th:with="jwtHeader =${@environment.getProperty('security.jwt.token.header-name')}"
           onsubmit="logout()"><br>
@@ -21,9 +29,7 @@
           th:content="${@environment.getProperty('security.jwt.token.header-name')}"/>
     <meta id="headerPrefix"
           th:content="${@environment.getProperty('security.jwt.token.header-prefix')}"/>
-    <meta id="jwt" th:content="${#httpServletResponse.getHeader('Authorization')}"/>
-
-    <script th:src="@{/js/auth-script.js}"></script>
+    <meta id="jwt" th:content="${jwt}"/>
 
   </div>
 

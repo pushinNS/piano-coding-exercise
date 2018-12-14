@@ -31,7 +31,7 @@ public class JwtTokenAuthenticationFilter extends GenericFilterBean {
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain filterChain)
             throws IOException, ServletException {
 
-        putRedirectUrlToSessionIfAuthRequested(req);
+        setRedirectUrlAttributeToSessionIfPresented((HttpServletRequest) req);
 
         String token = jwtTokenProvider.resolveToken((HttpServletRequest) req);
         if (token != null && jwtTokenProvider.notExpired(token) && tokenStore.isStored(token)) {
@@ -41,21 +41,21 @@ public class JwtTokenAuthenticationFilter extends GenericFilterBean {
         filterChain.doFilter(req, res);
     }
 
-    private void putRedirectUrlToSessionIfAuthRequested(ServletRequest req) {
-        final String redirectUrl = req.getParameter("redirectUrl");
-        final String uri = ((HttpServletRequest) req).getRequestURI();
-        final HttpSession session = ((HttpServletRequest) req).getSession();
+    private void setRedirectUrlAttributeToSessionIfPresented(HttpServletRequest request) {
+        final String redirectUrl = request.getParameter("redirectUrl");
+        final HttpSession session = request.getSession();
 
-        if (authPageRequested(uri) && redirectUrlPresented(redirectUrl) && nonNull(session)) {
+        if (authRequested(request) && redirectUrlPresented(redirectUrl) && nonNull(
+                session)) {
             session.setAttribute("redirectUrl", redirectUrl);
         }
     }
 
-    private boolean redirectUrlPresented(String redirectUrl) {
-        return !StringUtils.isEmpty(redirectUrl);
+    private boolean authRequested(HttpServletRequest request) {
+        return "/auth".equals(request.getRequestURI());
     }
 
-    private boolean authPageRequested(String uri) {
-        return "/auth".equals(uri);
+    private boolean redirectUrlPresented(String redirectUrl) {
+        return !StringUtils.isEmpty(redirectUrl);
     }
 }

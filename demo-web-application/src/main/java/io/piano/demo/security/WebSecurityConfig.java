@@ -80,7 +80,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/register", "/login").permitAll()
-                .antMatchers(HttpMethod.GET, "/apiError", "/css/**", "/js/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/apiError", "/error", "/css/**", "/js/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)

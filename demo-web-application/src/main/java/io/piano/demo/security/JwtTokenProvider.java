@@ -21,18 +21,24 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${security.jwt.token.header-name:Authorization}")
-    private String tokenHeaderName;
-    @Value("${security.jwt.token.header-prefix:Bearer }")
-    private String tokenHeaderPrefix;
-    @Value("${security.jwt.token.secret-key:secret}")
-    private String secretKey;
-    @Value("${security.jwt.token.expire-time:3600000}")
-    private long validityInMilliseconds;
+
+    private final String tokenHeaderName;
+    private final String tokenHeaderPrefix;
+    private final String secretKey;
+    private final long validityInMilliseconds;
 
     private final UserDetailsService userDetailsService;
 
-    public JwtTokenProvider(UserDetailsService userDetailsService) {
+    public JwtTokenProvider(
+            @Value("${security.jwt.token.header-name:Authorization}") String tokenHeaderName,
+            @Value("${security.jwt.token.header-prefix:Bearer }") String tokenHeaderPrefix,
+            @Value("${security.jwt.token.secret-key:secret}") String secretKey,
+            @Value("${security.jwt.token.expire-time:3600000}") long validityInMilliseconds,
+            UserDetailsService userDetailsService) {
+        this.tokenHeaderName = tokenHeaderName;
+        this.tokenHeaderPrefix = tokenHeaderPrefix;
+        this.secretKey = secretKey;
+        this.validityInMilliseconds = validityInMilliseconds;
         this.userDetailsService = userDetailsService;
     }
 
@@ -51,7 +57,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    Authentication getAuthentication(String token) {
+    public Authentication getAuthentication(String token) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(extractUsername(token));
         return new UsernamePasswordAuthenticationToken(userDetails, EMPTY_STRING,
                 userDetails.getAuthorities());
@@ -73,7 +79,7 @@ public class JwtTokenProvider {
         return null;
     }
 
-    boolean notExpired(String token) {
+    public boolean notExpired(String token) {
         try {
             final Date now = new Date();
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
